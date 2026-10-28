@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main, master]
-    paths: ['desktop/**', 'src/**', 'public/**', 'index.html', 'package.json', '.github/workflows/desktop.yml']
     tags: ['desktop-v*']
 permissions:
   contents: write
@@ -23,43 +22,61 @@ jobs:
       VITE_COMPANY_NAME: ${{ vars.VITE_COMPANY_NAME }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Find the Nook project folder
+        # Works whether the project is at the top of the repository or inside a folder (like "nook").
+        run: |
+          main=$(find . -type f -path '*/desktop/main.js' -not -path '*/node_modules/*' | head -1)
+          if [ -z "$main" ]; then
+            echo "::error::Could not find desktop/main.js anywhere in the repository. Upload the whole 'desktop' folder from nook.zip (see WINDOWS_APP.md), then run this again."
+            exit 1
+          fi
+          root=$(dirname "$(dirname "$main")")
+          echo "Project folder: $root"
+          missing=""
+          for f in package.json vite.config.js index.html src/main.jsx desktop/package.json desktop/preload.js desktop/detect.js desktop/games.json desktop/picker.html desktop/picker-preload.js desktop/scripts/copy-web.mjs desktop/build/icon.png; do
+            [ -f "$root/$f" ] || missing="$missing $f"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::These files are missing from $root:$missing. Upload the complete contents of nook.zip to your repository (see WINDOWS_APP.md), then run this again."
+            exit 1
+          fi
+          echo "NOOK_ROOT=$root" >> "$GITHUB_ENV"
+
       - name: Check the Supabase keys are set
         run: |
           if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
             echo "::error::Add the secrets VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (Settings > Secrets and variables > Actions > New repository secret), then run this again."
             exit 1
           fi
-      - name: Check the desktop files are in the repository
-        run: |
-          missing=""
-          for f in desktop/package.json desktop/main.js desktop/preload.js desktop/detect.js desktop/games.json desktop/picker.html desktop/picker-preload.js desktop/scripts/copy-web.mjs desktop/build/icon.png; do
-            [ -f "$f" ] || missing="$missing $f"
-          done
-          if [ -n "$missing" ]; then
-            echo "::error::These files are not in your repository:$missing. Upload the whole 'desktop' folder from nook.zip (see WINDOWS_APP.md, 'If something fails'), then run this again."
-            exit 1
-          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Install website dependencies
         run: npm install --no-audit --no-fund
+        working-directory: ${{ env.NOOK_ROOT }}
+
       - name: Install desktop dependencies
         run: npm install --no-audit --no-fund
-        working-directory: desktop
+        working-directory: ${{ env.NOOK_ROOT }}/desktop
+
       - name: Build the installer and publish a release
         if: startsWith(github.ref, 'refs/tags/')
         run: npm run release
-        working-directory: desktop
+        working-directory: ${{ env.NOOK_ROOT }}/desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build the installer
         if: "!startsWith(github.ref, 'refs/tags/')"
         run: npm run dist
-        working-directory: desktop
+        working-directory: ${{ env.NOOK_ROOT }}/desktop
+
       - name: Keep the installer
         uses: actions/upload-artifact@v4
         with:
           name: Nook-Setup
-          path: desktop/release/*.exe
+          path: ${{ env.NOOK_ROOT }}/desktop/release/*.exe
           if-no-files-found: error

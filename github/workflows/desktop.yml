@@ -1,0 +1,55 @@
+name: Build Windows app
+# Builds the Windows installer on GitHub, nothing to install on your side.
+#  - Push to main/master (or press "Run workflow"): builds the installer and attaches it to the run as "Nook-Setup".
+#  - Push a tag like desktop-v0.1.0: builds it AND publishes it as a GitHub release (this is what auto updates use).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths: ['desktop/**', 'src/**', 'public/**', 'index.html', 'package.json', '.github/workflows/desktop.yml']
+    tags: ['desktop-v*']
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
+      VITE_COMPANY_NAME: ${{ vars.VITE_COMPANY_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the Supabase keys are set
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Add the secrets VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (Settings > Secrets and variables > Actions > New repository secret), then run this again."
+            exit 1
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install website dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install desktop dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: desktop
+      - name: Build the installer and publish a release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: npm run release
+        working-directory: desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build the installer
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        run: npm run dist
+        working-directory: desktop
+      - name: Keep the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nook-Setup
+          path: desktop/release/*.exe
+          if-no-files-found: error

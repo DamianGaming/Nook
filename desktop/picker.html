@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+<title>Choose what to share</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.4 system-ui, 'Segoe UI', sans-serif; background: #12151e; color: #eef0f7; display: grid; grid-template-rows: auto 1fr auto; height: 100vh; }
+  header { padding: 18px 20px 8px; } h1 { margin: 0; font-size: 18px; } p { margin: 4px 0 0; color: #9aa1b5; font-size: 13px; }
+  main { overflow: auto; padding: 8px 20px 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-content: start; }
+  button.card { display: grid; gap: 8px; padding: 8px; border-radius: 12px; border: 2px solid #262b3b; background: #1a1e2b; color: inherit; cursor: pointer; text-align: left; font: inherit; }
+  button.card:hover { border-color: #3b4260; } button.card.on { border-color: #6475f5; background: #20263a; }
+  img.t { width: 100%; aspect-ratio: 16/10; object-fit: cover; border-radius: 8px; background: #0b0d14; }
+  .n { display: flex; align-items: center; gap: 6px; min-width: 0; } .n img { width: 16px; height: 16px; } .n span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
+  footer { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px 16px; border-top: 1px solid #262b3b; }
+  footer button { height: 38px; padding: 0 18px; border-radius: 10px; border: 0; font: inherit; font-weight: 700; cursor: pointer; }
+  #cancel { background: #262b3b; color: #eef0f7; } #share { background: #6475f5; color: #fff; } #share:disabled { opacity: 0.45; cursor: default; }
+</style></head>
+<body>
+  <header><h1>Choose what to share</h1><p>Pick a screen or a window.</p></header>
+  <main id="grid"></main>
+  <footer><button id="cancel">Cancel</button><button id="share" disabled>Share</button></footer>
+<script>
+  let sel = null
+  const grid = document.getElementById('grid'), share = document.getElementById('share')
+  window.picker.list().then((items) => {
+    for (const s of items) {
+      const b = document.createElement('button'); b.className = 'card'; b.type = 'button'
+      const t = document.createElement('img'); t.className = 't'; t.src = s.thumb; t.alt = ''
+      const n = document.createElement('div'); n.className = 'n'
+      if (s.icon) { const i = document.createElement('img'); i.src = s.icon; i.alt = ''; n.appendChild(i) }
+      const sp = document.createElement('span'); sp.textContent = s.name; n.appendChild(sp)
+      b.append(t, n)
+      b.onclick = () => { sel = s.id; grid.querySelectorAll('.card').forEach((c) => c.classList.toggle('on', c === b)); share.disabled = false }
+      b.ondblclick = () => window.picker.choose(s.id)
+      grid.appendChild(b)
+    }
+  })
+  share.onclick = () => sel && window.picker.choose(sel)
+  document.getElementById('cancel').onclick = () => window.picker.choose(null)
+  addEventListener('keydown', (e) => e.key === 'Escape' && window.picker.choose(null))
+</script></body></html>

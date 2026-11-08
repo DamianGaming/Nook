@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+<title>Choose what to share</title>
+<style>
+  :root { --bg-1:#0e1118; --bg-2:#12151e; --bg-3:#181c28; --bg-4:#212636; --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.14); --text:#eceef7; --text-2:#a3a9c2; --text-3:#7d83a0; --accent:#6475f5; --accent-deep:#3d49b8; --accent-soft:rgba(100,117,245,.18); color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { font: 14px/1.4 'Figtree Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif; background: var(--bg-2); color: var(--text); display: grid; grid-template-rows: auto auto 1fr auto; border: 2px solid var(--line-2); border-radius: 18px; overflow: hidden; -webkit-font-smoothing: antialiased; }
+  header { display: flex; align-items: center; gap: 12px; padding: 18px 20px 6px; -webkit-app-region: drag; }
+  .ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: #a5b0ff; flex: none; }
+  h1 { margin: 0; font-size: 18px; font-weight: 750; } p { margin: 2px 0 0; color: var(--text-2); font-size: 13px; }
+  .x { margin-left: auto; width: 32px; height: 32px; border-radius: 10px; border: 0; background: none; color: var(--text-2); cursor: pointer; display: grid; place-items: center; -webkit-app-region: no-drag; }
+  .x:hover { background: var(--bg-4); color: var(--text); }
+  .bar { display: flex; gap: 10px; align-items: center; padding: 10px 20px 4px; }
+  .seg { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--bg-3); gap: 2px; }
+  .seg button { border: 0; background: none; color: var(--text-2); font: inherit; font-weight: 650; padding: 6px 14px; border-radius: 9px; cursor: pointer; }
+  .seg button.on { background: var(--bg-4); color: var(--text); box-shadow: 0 1px 0 rgba(0,0,0,.3); }
+  input[type=search] { flex: 1; min-width: 0; height: 34px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg-3); color: var(--text); font: inherit; padding: 0 12px; outline: none; }
+  input[type=search]:focus { border-color: var(--accent); }
+  main { overflow: auto; padding: 10px 20px 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-content: start; scrollbar-width: thin; scrollbar-color: var(--bg-4) transparent; }
+  .empty { grid-column: 1 / -1; text-align: center; color: var(--text-3); padding: 40px 0; }
+  button.card { position: relative; display: grid; gap: 8px; padding: 8px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg-3); color: inherit; cursor: pointer; text-align: left; font: inherit; box-shadow: 0 3px 0 rgba(0,0,0,.3); transition: transform .12s cubic-bezier(.34,1.56,.64,1), border-color .12s, box-shadow .12s; }
+  button.card:hover { border-color: var(--line-2); transform: translateY(-2px); }
+  button.card:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,.3); }
+  button.card:focus-visible { outline: 2px solid #a5b0ff; outline-offset: 2px; }
+  button.card.on { border-color: var(--accent); background: var(--accent-soft); }
+  button.card.on::after { content: ''; position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 14px no-repeat; box-shadow: 0 2px 0 var(--accent-deep); }
+  img.t { width: 100%; aspect-ratio: 16/10; object-fit: cover; border-radius: 9px; background: #0b0d14; display: block; }
+  .n { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 0 2px 2px; } .n img { width: 16px; height: 16px; flex: none; } .n span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 600; }
+  footer { display: flex; align-items: center; gap: 10px; padding: 12px 20px 16px; border-top: 1px solid var(--line); }
+  footer .hint { color: var(--text-3); font-size: 12px; margin-right: auto; }
+  footer button { height: 40px; padding: 0 20px; border-radius: 12px; border: 2px solid transparent; font: inherit; font-weight: 750; cursor: pointer; transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s; }
+  #cancel { background: none; border-color: var(--line-2); color: var(--text); box-shadow: 0 3px 0 rgba(0,0,0,.3); }
+  #share { background: var(--accent); color: #fff; box-shadow: 0 3px 0 var(--accent-deep); }
+  footer button:hover:not(:disabled) { transform: translateY(-1px); } footer button:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
+  #share:disabled { opacity: .45; cursor: default; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style></head>
+<body>
+  <header>
+    <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+    <div><h1>Share your screen</h1><p>Pick a screen or a window to show in the call.</p></div>
+    <button class="x" id="close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </header>
+  <div class="bar">
+    <div class="seg" role="tablist"><button id="t-screen" role="tab" class="on">Screens</button><button id="t-window" role="tab">Windows</button></div>
+    <input type="search" id="q" placeholder="Search windows" aria-label="Search" />
+  </div>
+  <main id="grid" role="listbox" aria-label="Things you can share"></main>
+  <footer><span class="hint">Double click to share straight away</span><button id="cancel">Cancel</button><button id="share" disabled>Share</button></footer>
+<script>
+  let sel = null, tab = 'screen', all = []
+  const grid = document.getElementById('grid'), share = document.getElementById('share'), q = document.getElementById('q')
+  function draw() {
+    const text = q.value.trim().toLowerCase()
+    const items = all.filter((s) => (tab === 'screen') === s.id.startsWith('screen:') && (!text || s.name.toLowerCase().includes(text)))
+    grid.textContent = ''
+    if (!items.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = tab === 'screen' ? 'No screens found.' : 'No windows found.'; grid.appendChild(e); return }
+    for (const s of items) {
+      const b = document.createElement('button'); b.className = 'card' + (s.id === sel ? ' on' : ''); b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('aria-selected', s.id === sel)
+      const t = document.createElement('img'); t.className = 't'; t.src = s.thumb; t.alt = ''
+      const n = document.createElement('div'); n.className = 'n'
+      if (s.icon) { const i = document.createElement('img'); i.src = s.icon; i.alt = ''; n.appendChild(i) }
+      const sp = document.createElement('span'); sp.textContent = s.name; n.appendChild(sp)
+      b.append(t, n)
+      b.onclick = () => { sel = s.id; share.disabled = false; draw() }
+      b.ondblclick = () => window.picker.choose(s.id)
+      grid.appendChild(b)
+    }
+  }
+  function setTab(t) { tab = t; document.getElementById('t-screen').classList.toggle('on', t === 'screen'); document.getElementById('t-window').classList.toggle('on', t === 'window'); q.placeholder = t === 'screen' ? 'Search screens' : 'Search windows'; draw() }
+  document.getElementById('t-screen').onclick = () => setTab('screen')
+  document.getElementById('t-window').onclick = () => setTab('window')
+  q.oninput = draw
+  window.picker.list().then((items) => { all = items; if (!items.some((s) => s.id.startsWith('screen:'))) tab = 'window'; setTab(tab) })
+  share.onclick = () => sel && window.picker.choose(sel)
+  document.getElementById('cancel').onclick = () => window.picker.choose(null)
+  document.getElementById('close').onclick = () => window.picker.choose(null)
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') window.picker.choose(null); else if (e.key === 'Enter' && sel && e.target !== q) window.picker.choose(sel) })
+</script></body></html>

@@ -1,1 +1,0 @@
-# Extra packages your bot uses. The Nook library itself is installed by start.bat.

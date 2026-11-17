@@ -1,0 +1,54 @@
+{
+  "name": "nook-desktop",
+  "productName": "Nook",
+  "version": "0.1.0",
+  "description": "Nook for Windows. The same app as the website, in its own window.",
+  "author": "Mega Studios",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "web": "node scripts/copy-web.mjs",
+    "start": "npm run web && electron .",
+    "dist": "npm run web && node scripts/builder.mjs dist",
+    "release": "npm run web && node scripts/builder.mjs release"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "gg.megastudios.nook",
+    "productName": "Nook",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "detect.js",
+      "games.json",
+      "picker.html",
+      "picker-preload.js",
+      "app/**",
+      "build/icon.png"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "Nook-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Nook",
+      "artifactName": "Nook-Setup.${ext}"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  }
+}
